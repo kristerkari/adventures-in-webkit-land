@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+
+Sitemap: http://kristerkari.github.com/adventures-in-webkit-land/sitemap.xml 

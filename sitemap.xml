@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
+    <url>
+        <loc>
+            http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/03/08/dealing-with-svg-images-in-mobile-browsers/
+        </loc>
+        <lastmod>2013-03-08T08:30:55+02:00</lastmod>
+    </url>
+    <url>
+        <loc>http://kristerkari.github.com/adventures-in-webkit-land/blog/archives/</loc>
+        <lastmod>2013-03-08T08:30:55+02:00</lastmod>
+    </url>
+    <url>
+        <loc>http://kristerkari.github.com/adventures-in-webkit-land/</loc>
+        <lastmod>2013-03-08T08:30:55+02:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://kristerkari.github.com/adventures-in-webkit-land/javascripts/datachart.coffee
+        </loc>
+        <lastmod>2013-01-22T01:09:39+02:00</lastmod>
+    </url>
+    <url>
+        <loc>http://kristerkari.github.com/adventures-in-webkit-land/robots.txt</loc>
+        <lastmod>2013-01-22T00:54:16+02:00</lastmod>
+    </url>
+</urlset>
