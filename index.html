@@ -9,7 +9,7 @@
   <meta name="author" content="Krister Kari">
 
   
-  <meta name="description" content="When browsing the web with my retina iPad, I often see websites that could have used SVG for their cartoon-like graphics, but used PNG instead. It &hellip;">
+  <meta name="description" content="I recently visited a parallax scrolling website that was just one of those thousands of different parallax scrolling websites out there. One thing &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -66,6 +66,343 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps/">Fixing a parallax scrolling website to run in 60 FPS</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-30T09:11:00+03:00" pubdate data-updated="true">Aug 30<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I recently visited a parallax scrolling website that was just one of those thousands of different parallax scrolling websites out there. One thing that I noticed immediately was that the scrolling FPS of that page was really bad. I suspected that there would be room for improvement in their parallax implementation, and I started to see if there was something I could do about it.</p>
+
+<p>I&#8217;m not going to link to that website or tell you its name. Why? Simply because it&#8217;s a live website and they can change their parallax implementation at any moment, and that would probably distract people reading this blog post.</p>
+
+<p>I was interested in seeing what I could do to increase performance <em>by modifying the original code as little as possible</em>. I&#8217;ll show you five fixes that give the website a nice performance boost.</p>
+
+<h2>Finding out what is wrong</h2>
+
+<p>First of all, what causes bad scrolling performance (low FPS)? Well, that is a tricky question. It <em>can</em> be caused by almost anything related to your page: images, CSS or Javascript (or all of them).</p>
+
+<p>HTML5 rocks article called <a href="http://www.html5rocks.com/en/tutorials/speed/scrolling/">&#8220;Scrolling Performance&#8221;</a> gives some explanation for low parallax FPS:</p>
+
+<blockquote><p>&#8230;Whenever you scroll a page the browser will probably need to paint some of the pixels in those layers (sometimes called compositor layers). By grouping things into layers we need only update that specific layer&#8217;s texture when something inside that specific layer has changed, and where we can we want to only paint and rasterize the part of a render layer&#8217;s texture that&#8217;s been damaged rather than the whole thing. <strong>Obviously if you have things moving as you scroll, like in a parallax site, then you&#8217;re potentially damaging a large area, possibly across multiple layers, and this can result in a lot of expensive paint work.</strong></p></blockquote>
+
+<p><em>&#8211; Paul Lewis, in <a href="http://www.html5rocks.com/en/tutorials/speed/scrolling/#toc-specifics">Scrolling Performance</a></em></p>
+
+<p>Chrome&#8217;s developer tools help a lot when investigating problems like this, so I used <code>Cmd + Opt + J</code> (<code>Ctrl + Shift + J</code> on Windows) to open dev tools on the page and went to &#8220;Timeline&#8221; and clicked &#8220;Frames&#8221;.</p>
+
+<p><strong>This the initial FPS recording of the website recorded with Chrome&#8217;s dev tools:*</strong>
+<img src="/adventures-in-webkit-land/images/parallax_original_fps.png"></p>
+
+<p>Now, it is better that I explain what is going on here.</p>
+
+<p><strong>The x-axis of the image:</strong> represents time, in this case something close to 5 seconds of scrolling.</p>
+
+<p><strong>The y-axis of the image:</strong> green color of the bars indicate that the browser mostly spends time on doing &#8220;paint&#8221;: painting the content on the screen. Longer bars (that go above the 30 FPS mark) happen when a parallax background image gets shown. The bad thing is that there are three long low FPS bars (&lt; 30 FPS) in a row for each parallax image. That makes the website feel sluggish.</p>
+
+<p>*<em>If you are not familiar with the timeline view in Chrome dev tools, <a href="https://developers.google.com/chrome-developer-tools/docs/timeline">take a look at the official documentation</a> (helps understand the images in this blog post).</em></p>
+
+<h2>The parallax technique used</h2>
+
+<p>Let me try to explain the parallax scrolling technique that the website is using.</p>
+
+<p>There are <code>div</code> elements on the page that all share the same CSS class <code>.parallax-bg</code>. On Javascript side jQuery is used to loop through those elements and read a <code>data-</code> attribute that holds a filename for an image, which is then used to load each parallax background image by creating a new image element in Javascript.</p>
+
+<p>Created image elements get appended to a new <code>div</code> element that is appended to the page. Each new <code>div</code> element has CSS <code>transform: translate3d(0px, y, 0px);</code> set, where <code>y</code> is the current vertical position in pixels (e.g. <code>-620px</code>).</p>
+
+<p>Inside a <code>scroll</code> event handler there is a &#8220;visibility&#8221; check, so that only one of the parallax images is visible when user scrolls. On scroll <code>translate3d</code>&#8217;s <code>y</code> value is updated for only the currently visible image (<em>creating a parallax effect</em>).</p>
+
+<h2>Fix 1. Don&#8217;t put scroll/resize event handlers inside a loop</h2>
+
+<p>Looking at the code, I could see that there had been some effort in trying to do the correct thing by caching image references and then attaching one <code>scroll</code> event listener that would loop through all the images.</p>
+
+<p>&#8230;but that code looked unfinished and was commented out. Looks like the developer(s) ran out of time and instead decided to attach the <code>$(window).on('scroll')</code> and <code>$(window).on('resize')</code> event handlers <strong>for each parallax image</strong> inside a <code>$('.parallax-bg').each(function() {});</code> loop.</p>
+
+<p><strong>This means that every time you scroll (or resize), an individual event handler is called for each of the images.</strong> Depending on what kind of work you do inside your <code>scroll</code> event handler, this can potentially be bad for performance.</p>
+
+<p>Here is the code that loops through the images that are on the page. <em>Yeah, I&#8217;ve stripped out all the unrelated code to keep it clean.</em></p>
+
+<figure class='code'><figcaption><span>scroll and resize event handlers placed inside a loop  </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.parallax-bg&#39;</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">parallaxImage</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">height</span> <span class="o">=</span> <span class="nx">parallaxImage</span><span class="p">.</span><span class="nx">height</span><span class="p">();</span>
+</span><span class='line'>  <span class="c1">// More...</span>
+</span><span class='line'>  <span class="c1">// Code to get element values...</span>
+</span><span class='line'>  <span class="c1">// etc..</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// Oh noes! We are inside a loop, so the following </span>
+</span><span class='line'>  <span class="c1">// code will create a new handler for each image!</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">$</span><span class="p">(</span><span class="nb">window</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;resize&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">height</span> <span class="o">=</span> <span class="nx">parallaxImage</span><span class="p">.</span><span class="nx">height</span><span class="p">();</span>
+</span><span class='line'>      <span class="c1">// Code to update element values...</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">$</span><span class="p">(</span><span class="nb">window</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;scroll&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="c1">// Logic to see which image should currently be shown...</span>
+</span><span class='line'>      <span class="c1">// Code to update `transform: translate3d` value...</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>By putting a <code>console.log</code> inside the scroll event handler and then scrolling, the console tab is flooded messages from each event handler:</p>
+
+<p><img src="/adventures-in-webkit-land/images/parallax_scroll_handlers.png"></p>
+
+<p>To fix it the code needs to be changed a bit, so here is my suggestion. I&#8217;ve written fixes as Javascript comments and marked them with numbers 1. - 6.</p>
+
+<figure class='code'><figcaption><span>Fix: Move event handlers outside the loop  </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// 1. Make an array that can hold the parallax image objects</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">parallaxImages</span> <span class="o">=</span> <span class="p">[];</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.parallax-bg&#39;</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 2. Inside the the loop make a new object to hold each image</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">parallaxImage</span> <span class="o">=</span> <span class="p">{};</span>
+</span><span class='line'>  <span class="c1">// 3. Save the information that you need from the image to that object</span>
+</span><span class='line'>  <span class="nx">parallaxImage</span><span class="p">.</span><span class="nx">element</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+</span><span class='line'>  <span class="nx">parallaxImage</span><span class="p">.</span><span class="nx">height</span> <span class="o">=</span> <span class="nx">parallaxImage</span><span class="p">.</span><span class="nx">element</span><span class="p">.</span><span class="nx">height</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// More...</span>
+</span><span class='line'>  <span class="c1">// Code to save element values...</span>
+</span><span class='line'>  <span class="c1">// etc..</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// 4. At the end of the loop push the object to the `parallaxImages` array</span>
+</span><span class='line'>  <span class="nx">parallaxImages</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">parallaxImage</span><span class="p">);</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 5. Move both event listeners outside the `$(&#39;.parallax-bg&#39;).each` loop</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="nb">window</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;resize&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// Code to update element values...</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">$</span><span class="p">(</span><span class="nb">window</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;scroll&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 6. Inside the event handler we loop each cached image object from the array</span>
+</span><span class='line'>  <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">parallaxImages</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">parallaxImage</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="c1">// Logic to see which image should currently be shown...</span>
+</span><span class='line'>      <span class="c1">// Code to update `transform: translate3d` value...</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Great! now only one event handler gets called when you scroll. On scroll the <code>parallaxImages</code> array is looped and we can use the existing check to see if the image should be visible or not.</p>
+
+<p><img src="/adventures-in-webkit-land/images/parallax_scroll_handlers_fixed.png"></p>
+
+<h2>Fix 2. use requestAnimationFrame for resize and scroll event handlers</h2>
+
+<p>It might not be that obvious, but attaching a <code>scroll</code> event handler can in some cases be really costly for your website&#8217;s performance. The reason for this is that by default the event handler gets called <em>a lot</em>, possibly several times per a frame when you are scrolling the page. If you are reading/writing values to the DOM or updating the layout of your page somehow directly in your <code>scroll</code> event handler, it will usually have a bad impact on the performance.</p>
+
+<p>So what is the deal with <code>requestAnimationFrame</code>? It basically allows the browser to run your event handler (or any other function that runs frequently) when it is free to do new paint work on the screen.</p>
+
+<p><em>&#8220;The window.requestAnimationFrame() method tells the browser that you wish to perform an animation and requests that the browser call a specified function to update an animation before the next repaint. The method takes as an argument a callback to be invoked before the repaint.&#8221;</em> - <a href="https://developer.mozilla.org/en-US/docs/Web/API/window.requestAnimationFrame">MDN</a></p>
+
+<p>Let&#8217;s see what <a href="http://www.youtube.com/watch?v=z0_jD8nO5Zw&amp;t=465">Paul Irish has to say</a> about <code>scroll</code> and <code>resize</code> event handlers and <code>requestAnimationFrame</code>:</p>
+
+<blockquote><p>There are only a few things you should ever do inside a resize event or a scroll event&#8230; &#8230;inside a scroll event you can ask for, lets say, the scrollTop() metric&#8230; you can also ask for the time&#8230; and that&#8217;s about it. You do not want to do any other work inside the handler! Do the work that you want to do inside a requestAnimationFrame()</p></blockquote>
+
+<p><em>&#8211; Paul Irish, in <a href="http://www.youtube.com/watch?v=z0_jD8nO5Zw">Chrome Office Hours: Performance</a></em></p>
+
+<p>The fix is simple: just include <a href="https://gist.github.com/paulirish/1579671">requestAnimationFrame polyfill</a> for better cross-browser support, and give your scroll event handler to <code>requestAnimationFrame</code>.</p>
+
+<figure class='code'><figcaption><span>requestAnimationFrame example  </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">$</span><span class="p">(</span><span class="nb">window</span><span class="p">).</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;scroll&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>   <span class="nb">window</span><span class="p">.</span><span class="nx">requestAnimationFrame</span><span class="p">(</span><span class="nx">scrollHandler</span><span class="p">);</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After using a single <code>scroll</code> event handler + <code>requestAnimationFrame</code>, the timeline recording started to look already a bit better:</p>
+
+<p><img src="/adventures-in-webkit-land/images/parallax_raf.png"></p>
+
+<h2>Fix 3. Avoid resizing big images</h2>
+
+<p>After first two fixes the timeline still has huge spikes (FPS drops) every time a new parallax image is shown. A Recording shows why:</p>
+
+<p><img src="/adventures-in-webkit-land/images/parallax_image_decoding.png"></p>
+
+<p>Long green bars indicate, that a lot of time (<code>150-200ms</code>) is spent on painting the area for each parallax image: resizing, decoding and showing the JPEG. The timeline recording shows a painted pixel size of <code>1351x469</code> pixels. When inspecting the images, I can see that those images have a resolution of <code>3000x2000</code> pixels, so the actual painted area is much smaller than image&#8217;s resolution. This means that the browser needs to do extra work to show the image on screen.</p>
+
+<blockquote><p>&#8230;If you&#8217;re sending large images to a device and then scaling them down using CSS or image dimension attributes, you&#8217;re more likely to see this happen. <strong>Of course the amount by which the browser has to rescale images, and the frequency with which it has to do this, is going to affect your page&#8217;s performance as they happen on the main browser thread, and therefore block other work from taking place. The case for sending images that can be rendered without any resizing, therefore, is very strong.</strong></p></blockquote>
+
+<p><em>&#8211; Paul Lewis, in <a href="http://www.html5rocks.com/en/tutorials/speed/scrolling/#toc-resizing">Scrolling Performance</a></em></p>
+
+<p>Rather than resizing a big image, you could create at least 6-10 different resolutions of the same image (<em>you can look at your website&#8217;s analytics to see what are the most common resolutions</em>), and to use a responsive image solution, like <a href="https://github.com/scottjehl/picturefill">Picturefill</a> to serve the image that is closest to user&#8217;s browser&#8217;s current resolution.</p>
+
+<p>I did a quick fix by just resizing all images to match my <code>1360x768</code> resolution. This cause the JPEG decoding time to drop from <code>~50ms</code> to <code>30-35ms</code> for each image. I know that it does not seem like a huge win in terms of time, but it actually helps in enabling next fix (fix 4).</p>
+
+<h2>Fix 4. Remove background-size CSS property if it slows down your website</h2>
+
+<p>Using <code>background-size: 100%</code> is good if you want to make sure that your background images automatically fit nicely to match visitor&#8217;s screen resolution. If you use it for your parallax background images, <strong>those images probably have to be resized to fit your screen every time an image is shown on the screen</strong>, which is bad for performance.</p>
+
+<p>But if you use some kind of responsive image solution, there might not even be a need to use <code>background-size</code>, so remove it from your code to get a nice performance boost!</p>
+
+<p>Let&#8217;s take a new recording and see how it looks like:
+<img src="/adventures-in-webkit-land/images/parallax_remove_background_size.png"></p>
+
+<h2>Bonus fix: experiment with translateZ(0) on the images</h2>
+
+<p>Using CSS <code>transform: translateZ(0);</code> on the images is something that can further increase performance, but I don&#8217;t recommend using it unless you are fully aware of what it does. Basically, it is considered to be a hack that usually forces the rendering to happen on GPU.</p>
+
+<blockquote><p>&#8230;Many times people just use the -webkit-transform: translateZ(0); hack and see magical performance improvements, and while this works today there are problems:
+1. It’s not cross-browser compatible.
+2. It forces the browser’s hand by creating a new layer for every transformed element. Lots of layers can bring other performance bottlenecks, so use sparingly!
+3. It’s been disabled for some WebKit ports.</p></blockquote>
+
+<p><em>&#8211; Paul Lewis, in <a href="http://www.html5rocks.com/en/tutorials/speed/parallax/">Parallaxin&#8217;</a></em></p>
+
+<p>In my case adding the <code>transform: translateZ(0);</code> hack to parallax images increased overall FPS <em>in Chrome</em>, but in some other case it could possibly create performance issues, so beware!</p>
+
+<h2>What about other fixes?</h2>
+
+<p>There could be possibly more performance optimizations done by doing a refactor for the website&#8217;s code, but honestly I don&#8217;t have time and really don&#8217;t feel like doing that.</p>
+
+<p>One thing that I wasn&#8217;t sure about was that is it possible somehow to get rid of the previously mentioned ~35ms image decoding cost when an image is getting shown by the browser (<code>display: none</code> -> <code>display: block</code>). Looks like that is causing the remaining spikes that are visible in timeline recordings.</p>
+
+<h2>Conclusion (tl;dr)</h2>
+
+<p>Low parallax scrolling FPS is relatively easy to increase once you are able to recognize possible performance bottlenecks.</p>
+
+<p>By combining all of the performance improving tricks mentioned in this post, I managed to increase the overall FPS of the website so that it drops only a couple of times shortly to 50 or 40 FPS, but does not drop under 30 at any point. This means that there are no more hiccups when scrolling.</p>
+
+<p><strong>FPS before any fixes*</strong>
+<img src="/adventures-in-webkit-land/images/parallax_original_fps.png">
+<strong>After single scroll event handler + rAF*</strong>
+<img src="/adventures-in-webkit-land/images/parallax_raf.png">
+<strong>After bg image fix and removing background-size*</strong>
+<img src="/adventures-in-webkit-land/images/parallax_remove_background_size.png">
+<strong>After translateZ(0), all fixes*</strong>
+<img src="/adventures-in-webkit-land/images/parallax_translatez.png"></p>
+
+<p><em>*Widths of the green bars differ a bit because the scrolling time and distance was not _exactly_ the same every time.</em></p>
+
+<h2>Resources</h2>
+
+<p><strong>Parallax related</strong></p>
+
+<ul>
+<li><a href="http://www.html5rocks.com/en/tutorials/speed/parallax/">Parallaxin&#8217;</a> by Paul Lewis</li>
+<li><a href="http://code.flickr.net/2013/06/04/adventures-in-jank-busting-parallax-performance-and-the-new-flickr-home-page/">Adventures in Jank Busting: Parallax, performance, and the new Flickr Home Page</a> by Scott Schiller</li>
+</ul>
+
+
+<p><strong>Paul&amp;Paul investigating rendering problems</strong></p>
+
+<ul>
+<li><a href="http://www.youtube.com/watch?v=z0_jD8nO5Zw">[VIDEO] Chrome Office Hours: Performance</a></li>
+</ul>
+
+
+<p><strong>Layout and rendering</strong></p>
+
+<ul>
+<li><a href="http://jakearchibald.com/2013/solving-rendering-perf-puzzles/">Solving rendering performance puzzles</a> by Jake Archibald</li>
+<li><a href="http://www.html5rocks.com/en/tutorials/speed/scrolling/">Scrolling Performance</a> by Paul Lewis</li>
+<li><a href="http://addyosmani.com/blog/performance-optimisation-with-timeline-profiles/">Improving Web App Performance With the Chrome DevTools Timeline and Profiles</a> by Addy Osmani</li>
+<li><a href="http://www.smashingmagazine.com/2013/06/10/pinterest-paint-performance-case-study/">Gone In 60 Frames Per Second: A Pinterest Paint Performance Case Study</a> by Addy Osmani</li>
+<li><a href="http://kellegous.com/j/2013/01/26/layout-performance/">On Layout &amp; Web Performance</a> by Kelly Norton</li>
+</ul>
+
+
+<p><strong>Image rendering performance</strong></p>
+
+<ul>
+<li><a href="http://gist.io/3639830">WebKit image rendering performance</a></li>
+</ul>
+
+
+<p><strong>requestAnimationFrame</strong></p>
+
+<ul>
+<li><a href="http://html5hub.com/request-animation-frame-for-better-performance/">Request Animation Frame for Better Performance</a> by Jon Raasch</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/window.requestAnimationFrame">Mozilla Developer Network: window.requestAnimationFrame</a></li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -382,6 +719,10 @@
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps/">Fixing a parallax scrolling website to run in 60 FPS</a>
+      </li>
     
       <li class="post">
         <a href="/adventures-in-webkit-land/blog/2013/03/08/dealing-with-svg-images-in-mobile-browsers/">Dealing with SVG images in mobile browsers</a>

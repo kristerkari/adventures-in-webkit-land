@@ -1,24 +1,98 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Adventures in WebKit land]]></title>
-  <link href="http://kristerkari.github.com/adventures-in-webkit-land/atom.xml" rel="self"/>
-  <link href="http://kristerkari.github.com/adventures-in-webkit-land/"/>
-  <updated>2013-08-30T09:11:05+03:00</updated>
-  <id>http://kristerkari.github.com/adventures-in-webkit-land/</id>
-  <author>
-    <name><![CDATA[Krister Kari]]></name>
-    
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Fixing a parallax scrolling website to run in 60 FPS - Adventures in WebKit land</title>
+  <meta name="author" content="Krister Kari">
 
   
-  <entry>
-    <title type="html"><![CDATA[Fixing a parallax scrolling website to run in 60 FPS]]></title>
-    <link href="http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps/"/>
-    <updated>2013-08-30T09:11:00+03:00</updated>
-    <id>http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps</id>
-    <content type="html"><![CDATA[<p>I recently visited a parallax scrolling website that was just one of those thousands of different parallax scrolling websites out there. One thing that I noticed immediately was that the scrolling FPS of that page was really bad. I suspected that there would be room for improvement in their parallax implementation, and I started to see if there was something I could do about it.</p>
+  <meta name="description" content="I recently visited a parallax scrolling website that was just one of those thousands of different parallax scrolling websites out there. One thing &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps/">
+  <link href="/adventures-in-webkit-land/favicon.png" rel="icon">
+  <link href="/adventures-in-webkit-land/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/adventures-in-webkit-land/javascripts/modernizr-2.0.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="/adventures-in-webkit-land/javascripts/ender.js"></script>
+  <script src="/adventures-in-webkit-land/javascripts/octopress.js" type="text/javascript"></script>
+  <script src="/adventures-in-webkit-land/javascripts/highcharts.js"></script>
+  <link href="/adventures-in-webkit-land/atom.xml" rel="alternate" title="Adventures in WebKit land" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/adventures-in-webkit-land/">Adventures in WebKit land</a></h1>
+  
+    <h2>A blog about mobile and desktop front-end</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/adventures-in-webkit-land/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:kristerkari.github.com/adventures-in-webkit-land" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/adventures-in-webkit-land/">Blog</a></li>
+  <li><a href="/adventures-in-webkit-land/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Fixing a parallax scrolling website to run in 60 FPS</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-30T09:11:00+03:00" pubdate data-updated="true">Aug 30<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I recently visited a parallax scrolling website that was just one of those thousands of different parallax scrolling websites out there. One thing that I noticed immediately was that the scrolling FPS of that page was really bad. I suspected that there would be room for improvement in their parallax implementation, and I started to see if there was something I could do about it.</p>
 
 <p>I&#8217;m not going to link to that website or tell you its name. Why? Simply because it&#8217;s a live website and they can change their parallax implementation at any moment, and that would probably distract people reading this blog post.</p>
 
@@ -37,7 +111,7 @@
 <p>Chrome&#8217;s developer tools help a lot when investigating problems like this, so I used <code>Cmd + Opt + J</code> (<code>Ctrl + Shift + J</code> on Windows) to open dev tools on the page and went to &#8220;Timeline&#8221; and clicked &#8220;Frames&#8221;.</p>
 
 <p><strong>This the initial FPS recording of the website recorded with Chrome&#8217;s dev tools:*</strong>
-<img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_original_fps.png"></p>
+<img src="/adventures-in-webkit-land/images/parallax_original_fps.png"></p>
 
 <p>Now, it is better that I explain what is going on here.</p>
 
@@ -113,7 +187,7 @@
 
 <p>By putting a <code>console.log</code> inside the scroll event handler and then scrolling, the console tab is flooded messages from each event handler:</p>
 
-<p><img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_scroll_handlers.png"></p>
+<p><img src="/adventures-in-webkit-land/images/parallax_scroll_handlers.png"></p>
 
 <p>To fix it the code needs to be changed a bit, so here is my suggestion. I&#8217;ve written fixes as Javascript comments and marked them with numbers 1. - 6.</p>
 
@@ -185,7 +259,7 @@
 
 <p>Great! now only one event handler gets called when you scroll. On scroll the <code>parallaxImages</code> array is looped and we can use the existing check to see if the image should be visible or not.</p>
 
-<p><img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_scroll_handlers_fixed.png"></p>
+<p><img src="/adventures-in-webkit-land/images/parallax_scroll_handlers_fixed.png"></p>
 
 <h2>Fix 2. use requestAnimationFrame for resize and scroll event handlers</h2>
 
@@ -215,13 +289,13 @@
 
 <p>After using a single <code>scroll</code> event handler + <code>requestAnimationFrame</code>, the timeline recording started to look already a bit better:</p>
 
-<p><img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_raf.png"></p>
+<p><img src="/adventures-in-webkit-land/images/parallax_raf.png"></p>
 
 <h2>Fix 3. Avoid resizing big images</h2>
 
 <p>After first two fixes the timeline still has huge spikes (FPS drops) every time a new parallax image is shown. A Recording shows why:</p>
 
-<p><img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_image_decoding.png"></p>
+<p><img src="/adventures-in-webkit-land/images/parallax_image_decoding.png"></p>
 
 <p>Long green bars indicate, that a lot of time (<code>150-200ms</code>) is spent on painting the area for each parallax image: resizing, decoding and showing the JPEG. The timeline recording shows a painted pixel size of <code>1351x469</code> pixels. When inspecting the images, I can see that those images have a resolution of <code>3000x2000</code> pixels, so the actual painted area is much smaller than image&#8217;s resolution. This means that the browser needs to do extra work to show the image on screen.</p>
 
@@ -240,7 +314,7 @@
 <p>But if you use some kind of responsive image solution, there might not even be a need to use <code>background-size</code>, so remove it from your code to get a nice performance boost!</p>
 
 <p>Let&#8217;s take a new recording and see how it looks like:
-<img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_remove_background_size.png"></p>
+<img src="/adventures-in-webkit-land/images/parallax_remove_background_size.png"></p>
 
 <h2>Bonus fix: experiment with translateZ(0) on the images</h2>
 
@@ -268,13 +342,13 @@
 <p>By combining all of the performance improving tricks mentioned in this post, I managed to increase the overall FPS of the website so that it drops only a couple of times shortly to 50 or 40 FPS, but does not drop under 30 at any point. This means that there are no more hiccups when scrolling.</p>
 
 <p><strong>FPS before any fixes*</strong>
-<img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_original_fps.png">
+<img src="/adventures-in-webkit-land/images/parallax_original_fps.png">
 <strong>After single scroll event handler + rAF*</strong>
-<img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_raf.png">
+<img src="/adventures-in-webkit-land/images/parallax_raf.png">
 <strong>After bg image fix and removing background-size*</strong>
-<img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_remove_background_size.png">
+<img src="/adventures-in-webkit-land/images/parallax_remove_background_size.png">
 <strong>After translateZ(0), all fixes*</strong>
-<img src="http://kristerkari.github.com/adventures-in-webkit-land/images/parallax_translatez.png"></p>
+<img src="/adventures-in-webkit-land/images/parallax_translatez.png"></p>
 
 <p><em>*Widths of the green bars differ a bit because the scrolling time and distance was not _exactly_ the same every time.</em></p>
 
@@ -320,284 +394,115 @@
 <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/window.requestAnimationFrame">Mozilla Developer Network: window.requestAnimationFrame</a></li>
 </ul>
 
-]]></content>
-  </entry>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
   
-  <entry>
-    <title type="html"><![CDATA[Dealing with SVG images in mobile browsers]]></title>
-    <link href="http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/03/08/dealing-with-svg-images-in-mobile-browsers/"/>
-    <updated>2013-03-08T08:02:00+02:00</updated>
-    <id>http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/03/08/dealing-with-svg-images-in-mobile-browsers</id>
-    <content type="html"><![CDATA[<p>When browsing the web with my retina iPad, I often see websites that could have used SVG for their cartoon-like graphics, but used PNG instead. It seems weird, because most likely those images have been created with some vector graphics editor and then exported or converted to bitmap images.</p>
 
-<p>SVG has been supported in most browsers for years, but still it seems that developers are not yet comfortable with using SVG images on their websites.</p>
+<span class="byline author vcard">Posted by <span class="fn">Krister Kari</span></span>
 
-<p><a href="http://caniuse.com/#agents=mobile&amp;cats=SVG">SVG is quite well-supported in mobile browsers</a>. This means that you can link to a SVG file on your page in most mobile browsers and it just works. <em>But&#8230;</em> there is one big problem: <a href="http://caniuse.com/#agents=android&amp;cats=SVG"><strong>Android versions under 3 don&#8217;t have any kind of support for SVG in the stock browser</strong></a>. Desktop browsers have a similar situation with older Internet Explorer versions not supporting SVG.</p>
+      
 
-<h2>Using SVG on older Android versions</h2>
 
-<p>Todd Anglin <a href="http://www.kendoui.com/blogs/teamblog/posts/12-02-17/using_svg_on_android_2_x_and_kendo_ui_dataviz.aspx">wrote a very good post on Kendo UI blog</a> a year ago on how to deal with the situation on Android 2.X. In the blog post he describes how you can polyfill Android 2.X&#8217;s SVG support by using a javascript library to render SVG on a HTML5 canvas element.</p>
 
-<p>In his post he writes that according to Google&#8217;s stats 94% of the Android users use version 2.1, 2.2 or 2.3. Fortunately the situation has improved a lot in a year, and that percentage is ~54% at the time of writing this article. Well, 54% of all Android users is still a huge amount of people!</p>
 
-<h2>Polyfilling missing SVG support with Canvas</h2>
 
-<p>You can use <a href="http://modernizr.com/">Modernizr</a> and <a href="https://code.google.com/p/canvg/">Canvg</a> together to provide fallback(s) for SVG:</p>
 
-<figure class='code'><figcaption><span>Checking for SVG and Canvas support, polyfilling if needed </span><a href='http://jsbin.com/ujujuw/1/edit'>> JSBin demo </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// In this example the SVG image is included as a string (mySVGImage),</span>
-</span><span class='line'><span class="c1">// you could also link to a file (myimage.svg).</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">Modernizr</span><span class="p">.</span><span class="nx">svg</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="nx">Modernizr</span><span class="p">.</span><span class="nx">canvas</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">canvas</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;canvas&quot;</span><span class="p">);</span>
-</span><span class='line'>      <span class="nx">canvas</span><span class="p">.</span><span class="nx">setAttribute</span><span class="p">(</span><span class="s2">&quot;style&quot;</span><span class="p">,</span> <span class="s2">&quot;height:500px;width:300px;&quot;</span><span class="p">);</span>
-</span><span class='line'>      <span class="nx">canvg</span><span class="p">(</span><span class="nx">canvas</span><span class="p">,</span> <span class="nx">mySVGImage</span><span class="p">);</span>
-</span><span class='line'>      <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">canvas</span><span class="p">);</span>
-</span><span class='line'>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>      <span class="c1">// Do something else, perhaps a fallback to PNG?</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'><span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>  <span class="kd">var</span> <span class="nx">svgObj</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">);</span>
-</span><span class='line'>  <span class="nx">svgObj</span><span class="p">.</span><span class="nx">setAttribute</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;image/svg+xml&#39;</span><span class="p">);</span>
-</span><span class='line'>  <span class="nx">svgObj</span><span class="p">.</span><span class="nx">setAttribute</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;data:image/svg+xml,&#39;</span> <span class="o">+</span> <span class="nx">mySVGImage</span><span class="p">);</span>
-</span><span class='line'>  <span class="nx">svgObj</span><span class="p">.</span><span class="nx">setAttribute</span><span class="p">(</span><span class="s1">&#39;height&#39;</span><span class="p">,</span> <span class="s1">&#39;500&#39;</span><span class="p">);</span>
-</span><span class='line'>  <span class="nx">svgObj</span><span class="p">.</span><span class="nx">setAttribute</span><span class="p">(</span><span class="s1">&#39;width&#39;</span><span class="p">,</span> <span class="s1">&#39;300&#39;</span><span class="p">);</span>
-</span><span class='line'>  <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">svgObj</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
 
 
-<p>This is just a basic example, so if you use it, you should add more logic to make the <code>width</code> and <code>height</code> values more flexible, and for example polyfill missing Canvas support or add a fallback to a PNG image.</p>
-
-<h3>Polyfilling SVG with Canvas demo</h3>
-
-<p><strong>Here is a link to a JSBin example that shows the polyfilling in full action:</strong>
-<a href="http://jsbin.com/ujujuw/1/edit">http://jsbin.com/ujujuw/1/edit</a></p>
-
-<h2>Performance testing SVG to Canvas rendering</h2>
-
-<p>When I heard about the canvas rendering technique, I wanted to test if it is actually performant enough, knowing that SVG images might be a bit slow to render on slower mobile devices.</p>
-
-<p>To get a good idea of the performance, the rendering speed needed to be tested with a really slow device. <a href="http://www.gsmarena.com/zte_blade-3391.php">ZTE Blade</a> was perfect for this kind of testing, having Android 2.2, 512Mb of RAM and a CPU with clock speed of only 600mhz. I ran some browser performance tests on it earlier, so I knew that it is slow.</p>
-
-<p>For now I tested the polyfill performance with only one device, but I might revisit the testing with more 2.X devices when I have a bit of extra time.</p>
-
-<p>For a test image I used <a href="http://commons.wikimedia.org/wiki/File:FI-LL.svg">this SVG image of map of Finland</a>, that was rendered in 300x500 px resolution. I had an empty canvas element appended to <code>body</code> element and used Canvg library to render the stringified SVG image data to the canvas element.</p>
-
-<p>The test results were quite good for a device as slow as ZTE Blade. It would render the SVG map of Finland in <strong>1.3 - 1.4 seconds</strong>. What the result means is that you should be able to use this technique to render at least 1-2 SVG images even on slower Android devices without making the user wait for too long.</p>
-
-<h2>Getting the SVG image out of Canvas</h2>
-
-<p>HTML5 Canvas element usually has a <a href="https://developer.mozilla.org/en-US/docs/DOM/HTMLCanvasElement#Methods">toDataUrl method</a> that allows you to get the image data out of canvas as <a href="https://developer.mozilla.org/en-US/docs/data_URIs">a data URL</a>. Newer Android versions and iOS support this method, but unfortunately <a href="https://code.google.com/p/android/issues/detail?id=7901">it does not work in Android 2.X stock browser</a>.</p>
-
-<p>I was looking for a workaround for this, and found a javascript library called <a href="http://code.google.com/p/todataurl-png-js/">todataurl-png-js</a> that can be used to polyfill <code>toDataUrl</code> method for PNG images on Android 2.X.</p>
-
-<p>If you read the <a href="http://code.google.com/p/todataurl-png-js/wiki/FirstSteps">todataurl-png-js tutorial</a> you might notice this:</p>
-
-<blockquote><p>It&#8217;s slow. There&#8217;s just no way a JS implemented method can keep up with a native one. Plus, the PNG format wasn&#8217;t created to be fast: it needs two checksums in order to create a working file and neither of these methods is implemented in a browser&#8217;s native code.</p></blockquote>
-
-<p>A quick performance test clearly demonstrates the awful speed of it.</p>
-
-<p>It took <strong>72 seconds</strong> on ZTE Blade to:</p>
-
-<ol>
-<li>First render the map of Finland to the canvas element</li>
-<li>Then to get the image data URL out of canvas with polyfilled <code>toDataUrl</code> method <strong>(this step took over 70 seconds)</strong></li>
-<li>Then to create an image with the data URL as source and append it to the test page.</li>
-</ol>
-
-
-<h2>Converting SVG images to @font-face icons</h2>
-
-<p>Since SVG on Android is more or less broken (<em>unless you want to ignore over half of Android users</em>), you can use @font-face icons to replace at least some of your SVG images. This is not a great workaround for the problem, because <a href="http://blog.kaelig.fr/post/33373448491/testing-font-face-support-on-mobile-and-tablet#results">Android 2.1 stock browser, Windows Phone 7 IE9, Opera Mini and some other browsers do not support @font-face</a>. @font-face also only works for SVG images that are &#8220;simple shapes&#8221;. You can&#8217;t use it to render complex images.</p>
-
-<p>Rendering shapes or icons with @font-face has many limitations, but it is still a valid option in many cases.</p>
-
-<hr />
-
-<p><em>&#8211; Using @font-face fonts has an additional benefit for desktop browsers: <a href="http://caniuse.com/#agents=ie&amp;feat=fontface,svg">old Internet Explorer versions do not support SVG, but support @font-face fonts</a>.</em></p>
-
-<h3>FontCustom</h3>
-
-<p><a href="https://github.com/FontCustom/fontcustom">FontCustom</a> is a command line tool that allows you to convert a bunch of SVG files to a @font-face icon font.</p>
-
-<p>Installation on Mac OS X is easy, but you need to have <a href="http://www.ruby-lang.org/en/downloads/">Ruby</a> (comes with OS X) and <a href="http://mxcl.github.com/homebrew/">Homebrew</a> installed first. Install FontCustom by running:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>$ brew install fontforge eot-utils ttfautohint
-</span><span class='line'>$ gem install fontcustom</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Put your SVG files inside a folder (<em>mysvgfiles in this example</em>) and run <code>fontcustom compile</code> command:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>$ fontcustom compile mysvgfiles</span></code></pre></td></tr></table></div></figure>
-
-
-<p>&#8230;and your custom font is generated:</p>
-
-<figure class='code'><figcaption><span>Files generated with FontCustom </span></figcaption>
-<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>create  fontcustom
-</span><span class='line'>create  ./fontcustom/fontcustom-5c22c2e1aea68f865df308b2953475ff.woff
-</span><span class='line'>create  ./fontcustom/fontcustom-5c22c2e1aea68f865df308b2953475ff.ttf
-</span><span class='line'>create  ./fontcustom/fontcustom-5c22c2e1aea68f865df308b2953475ff.eot
-</span><span class='line'>create  ./fontcustom/fontcustom-5c22c2e1aea68f865df308b2953475ff.svg
-</span><span class='line'>create  fontcustom/fontcustom.css
-</span><span class='line'>create  fontcustom/fontcustom-ie7.css</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>Converting SVG to @font-face demo</h3>
-
-<p>For the demo I took <a href="http://commons.wikimedia.org/wiki/File:Silhouette_Mr_Pipo.svg">this silhouette of man SVG image by Nevit Dilme</a> and converted it to a font icon.</p>
-
-<p>When I set CSS <code>font-size</code> to <code>1000px</code>, I could see some rendering issues with at least desktop Chrome and iOS Safari. Small part of the man&#8217;s pipe is cut off. I have not yet had time to investigate why it happens, and if it is something that can be easily fixed.</p>
-
-<p><strong>Take a look at this JSBin demo to see some very simple examples of font icon rendering and usage:</strong>
-<a href="http://jsbin.com/ijifev/2/edit">http://jsbin.com/ijifev/2/edit</a></p>
-
-<h2>Minifying SVG image files</h2>
-
-<p>You might not be aware that the SVG images created by image editors contain a lot of extra data that you don&#8217;t need if you want to display the image on a web page.</p>
-
-<blockquote><p>SVG files, especially exported from various editors, usually contains a lot of redundant and useless information such as editor metadata, comments, hidden elements, default or non-optimal values and other stuff that can be safely removed or converted without affecting SVG rendering result.</p></blockquote>
-
-<p><em>&#8211; SVGO readme</em></p>
-
-<p>You also might not be aware that your SVG images can be minified in a bit similar way as your javascript can be. If you minify your javascript, then why wouldn&#8217;t you do the same thing for your SVG images? A great tool to do it is called <a href="https://github.com/svg/svgo">SVGO</a>.</p>
-
-<h3>SVGO</h3>
-
-<p>To install it you need to have <a href="http://nodejs.org/">Node.js</a> installed. SVGO can be installed by running:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>$ npm install svgo -g</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Running the tool on the Finnish map SVG image gives quite impressive results by shaving off almost 40% of the original file size:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>$ svgo FI-LL.svg FI-LL.min.svg</span></code></pre></td></tr></table></div></figure>
-
-
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>Done in 95 ms!
-</span><span class='line'>40.766 KiB - 38.7% = 24.99 KiB</span></code></pre></td></tr></table></div></figure>
-
-
-<p>File size savings are of course smaller when the file is gzipped:</p>
-
-<figure class='code'><figcaption><span>File sizes for the SVG image unminified / minified </span></figcaption>
-<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>|---------|-----------|----------|
-</span><span class='line'>|         | Unminfied | Minified |
-</span><span class='line'>|---------|-----------|----------|
-</span><span class='line'>| Default | 41Kb      | 25Kb     |
-</span><span class='line'>|---------|-----------|----------|
-</span><span class='line'>| Gzipped | 14Kb      | 11Kb     |
-</span><span class='line'>|---------|-----------|----------|</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The gzipped size for the optimized image is only 11Kb, so it is not much bigger than a PNG equivalent would be. Compared to the PNG version, the SVG image looks sharp on retina screens and you can scale it as much as you want.</p>
-
-<h4>SVGO custom configuration file</h4>
-
-<p>You can also use a custom configuration file with SVGO (<a href="https://github.com/svg/svgo/blob/master/.svgo.yml">you can use the default configuration file as a template</a>) where you are able disable and enable various compression settings. This is helpful if you want to make sure that the minification does not create any visual differences between the original and minified images.</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>$ svgo --config my_compression_settings.yml FI-LL.svg FI-LL.min.svg</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Conclusion (tl;dr)</h2>
-
-<p>SVG is definitely used too little on websites despite of its good support on both desktop and mobile browsers.</p>
-
-<p>The lack of SVG support in Android 2.X stock browser can be polyfilled (<a href="http://jsbin.com/ujujuw/1/edit">link</a>) by rendering SVG to HTML5 Canvas element. The performance penalty of it does not seem to be as bad as I first thought.</p>
-
-<p>Canvas element&#8217;s missing <code>toDataUrl</code> method in Android 2.X stock browser makes it impossible to get the image out of the canvas element as a bitmap in a performant way. This means that if you don&#8217;t want to make the user wait for ages, you can only use the canvas element to show SVG images to the user.</p>
-
-<p>Another workaround for Android 2.X&#8217;s lack of SVG support is to convert SVG images to @font-face icons. You can only render simple shapes or icons with it, and @font-face fonts do not work on Android 2.1 stock browser, Windows Phone 7 IE9, Opera Mini and some other browsers (<a href="http://blog.kaelig.fr/post/33373448491/testing-font-face-support-on-mobile-and-tablet#results">link</a>).</p>
-
-<p>You should be using a minification tool like SVGO to possibly get noticeable file size savings on your SVG images.</p>
-
-<h2>Resources</h2>
-
-<p><strong>David Bushell has written many good articles about SVG:</strong></p>
-
-<ul>
-<li><a href="http://dbushell.com/2012/04/03/svg-use-it-already/">SVG, Use it Already</a></li>
-<li><a href="http://coding.smashingmagazine.com/2012/01/16/resolution-independence-with-svg/">Resolution Independence With SVG</a></li>
-<li><a href="http://dbushell.com/2013/02/04/a-primer-to-front-end-svg-hacking/">A Primer to Front-end SVG Hacking</a></li>
-</ul>
-
-
-<p><strong>Chris Coyier also wrote about SVG:</strong></p>
-
-<ul>
-<li><a href="http://css-tricks.com/using-svg/">Using SVG</a></li>
-</ul>
-
-
-<p><strong>SVG images can be blurry too, as Simurai points out:</strong></p>
-
-<ul>
-<li><a href="http://simurai.com/post/19895985870/icon-sharpness-limbo">We’re in an icon-sharpness limbo</a></li>
-<li><a href="http://jsfiddle.net/simurai/dQbvD/12/">SVG blurriness fixed with shape-rendering: crispEdges;</a></li>
-</ul>
-
-
-<p><strong>Polyfilling SVG with Canvas:</strong></p>
-
-<ul>
-<li><a href="http://www.kendoui.com/blogs/teamblog/posts/12-02-17/using_svg_on_android_2_x_and_kendo_ui_dataviz.aspx">Using SVG on Android 2.x (and Kendo UI DataViz)</a></li>
-<li><a href="https://code.google.com/p/canvg/">Canvg</a></li>
-<li><a href="https://github.com/kangax/fabric.js/">Fabric.js</a></li>
-</ul>
-
-
-<p><strong>Different ways of adding SVG to your page:</strong></p>
-
-<ul>
-<li><a href="http://www.sitepoint.com/add-svg-to-web-page/">How to Add Scalable Vector Graphics to Your Web Page</a></li>
-</ul>
-
-]]></content>
-  </entry>
   
-</feed>
+
+
+<time datetime="2013-08-30T09:11:00+03:00" pubdate data-updated="true">Aug 30<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/adventures-in-webkit-land/blog/categories/dev-tools/'>dev-tools</a>, <a class='category' href='/adventures-in-webkit-land/blog/categories/frontend/'>frontend</a>, <a class='category' href='/adventures-in-webkit-land/blog/categories/parallax/'>parallax</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps/" data-via="" data-counturl="http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/adventures-in-webkit-land/blog/2013/03/08/dealing-with-svg-images-in-mobile-browsers/" title="Previous Post: Dealing with SVG images in mobile browsers">&laquo; Dealing with SVG images in mobile browsers</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps/">Fixing a parallax scrolling website to run in 60 FPS</a>
+      </li>
+    
+      <li class="post">
+        <a href="/adventures-in-webkit-land/blog/2013/03/08/dealing-with-svg-images-in-mobile-browsers/">Dealing with SVG images in mobile browsers</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Krister Kari -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
