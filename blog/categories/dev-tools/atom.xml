@@ -4,7 +4,7 @@
   <title><![CDATA[Category: dev-tools | Adventures in WebKit land]]></title>
   <link href="http://kristerkari.github.com/adventures-in-webkit-land/blog/categories/dev-tools/atom.xml" rel="self"/>
   <link href="http://kristerkari.github.com/adventures-in-webkit-land/"/>
-  <updated>2013-08-30T09:11:05+03:00</updated>
+  <updated>2013-09-01T15:59:54+03:00</updated>
   <id>http://kristerkari.github.com/adventures-in-webkit-land/</id>
   <author>
     <name><![CDATA[Krister Kari]]></name>
@@ -18,17 +18,17 @@
     <link href="http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps/"/>
     <updated>2013-08-30T09:11:00+03:00</updated>
     <id>http://kristerkari.github.com/adventures-in-webkit-land/blog/2013/08/30/fixing-a-parallax-scrolling-website-to-run-in-60-fps</id>
-    <content type="html"><![CDATA[<p>I recently visited a parallax scrolling website that was just one of those thousands of different parallax scrolling websites out there. One thing that I noticed immediately was that the scrolling FPS of that page was really bad. I suspected that there would be room for improvement in their parallax implementation, and I started to see if there was something I could do about it.</p>
+    <content type="html"><![CDATA[<p>I recently visited a parallax scrolling website that was just one of thousands of different parallax scrolling websites out there. One thing that I immediately noticed was that the scrolling FPS of that page was really bad. I suspected that there would be room for improvement in their parallax implementation, and I wanted to take a look to see if there was anything I could do to improve it.</p>
 
-<p>I'm not going to link to that website or tell you its name. Why? Simply because it's a live website and they can change their parallax implementation at any moment, and that would probably distract people reading this blog post.</p>
+<p>I'm not going to link to that website or tell you its name. Why? Simply because it is a live website and they can change their parallax implementation at any moment, and that would probably distract people reading this blog post.</p>
 
-<p>I was interested in seeing what I could do to increase performance <em>by modifying the original code as little as possible</em>. I'll show you five fixes that give the website a nice performance boost.</p>
+<p>I was interested to see what I could do to increase performance <em>by modifying the original code as little as possible</em>. I'll show you five fixes that give the website a nice performance boost.</p>
 
 <h2>Finding out what is wrong</h2>
 
 <p>First of all, what causes bad scrolling performance (low FPS)? Well, that is a tricky question. It <em>can</em> be caused by almost anything related to your page: images, CSS or Javascript (or all of them).</p>
 
-<p>HTML5 rocks article called <a href="http://www.html5rocks.com/en/tutorials/speed/scrolling/">"Scrolling Performance"</a> gives some explanation for low parallax FPS:</p>
+<p>HTML5 rocks article called <a href="http://www.html5rocks.com/en/tutorials/speed/scrolling/">"Scrolling Performance"</a> gives some explanation for low parallax scrolling FPS:</p>
 
 <blockquote><p>...Whenever you scroll a page the browser will probably need to paint some of the pixels in those layers (sometimes called compositor layers). By grouping things into layers we need only update that specific layer's texture when something inside that specific layer has changed, and where we can we want to only paint and rasterize the part of a render layer's texture that's been damaged rather than the whole thing. <strong>Obviously if you have things moving as you scroll, like in a parallax site, then you're potentially damaging a large area, possibly across multiple layers, and this can result in a lot of expensive paint work.</strong></p></blockquote>
 
@@ -36,34 +36,36 @@
 
 <p>Chrome's developer tools help a lot when investigating problems like this, so I used <code>Cmd + Opt + J</code> (<code>Ctrl + Shift + J</code> on Windows) to open dev tools on the page and went to "Timeline" and clicked "Frames".</p>
 
-<p><strong>This the initial FPS recording of the website recorded with Chrome's dev tools:*</strong>
+<p><strong>This is the initial FPS recording of the website:*</strong>
 <img src="/images/parallax_original_fps.png"></p>
 
-<p>Now, it is better that I explain what is going on here.</p>
+<p>It is better that I explain what is going on here.</p>
 
 <p><strong>The x-axis of the image:</strong> represents time, in this case something close to 5 seconds of scrolling.</p>
 
-<p><strong>The y-axis of the image:</strong> green color of the bars indicate that the browser mostly spends time on doing "paint": painting the content on the screen. Longer bars (that go above the 30 FPS mark) happen when a parallax background image gets shown. The bad thing is that there are three long low FPS bars (&lt; 30 FPS) in a row for each parallax image. That makes the website feel sluggish.</p>
+<p><strong>The y-axis of the image:</strong> green color of the bars indicate that the browser mostly spends time on doing "paint": painting the content on user's screen. Longer bars (that go above the 30 FPS mark) happen when a parallax background image gets shown. The bad thing is that there are three long, low FPS bars (&lt; 30 FPS) in a row for each parallax image. That makes scrolling feel sluggish.</p>
 
-<p>*<em>If you are not familiar with the timeline view in Chrome dev tools, <a href="https://developers.google.com/chrome-developer-tools/docs/timeline">take a look at the official documentation</a> (helps understand the images in this blog post).</em></p>
+<p>*<em>If you are not familiar with the timeline view in Chrome dev tools, <a href="https://developers.google.com/chrome-developer-tools/docs/timeline">take a look at the official documentation</a> (helps to understand the images in this blog post).</em></p>
 
 <h2>The parallax technique used</h2>
 
 <p>Let me try to explain the parallax scrolling technique that the website is using.</p>
 
-<p>There are <code>div</code> elements on the page that all share the same CSS class <code>.parallax-bg</code>. On Javascript side jQuery is used to loop through those elements and read a <code>data-</code> attribute that holds a filename for an image, which is then used to load each parallax background image by creating a new image element in Javascript.</p>
+<p>There are <code>div</code> elements on the page that all share the same <code>.parallax-bg</code> CSS class. On Javascript side jQuery is used to loop through those elements and read a <code>data-</code> attribute that holds a filename for an image.</p>
 
-<p>Created image elements get appended to a new <code>div</code> element that is appended to the page. Each new <code>div</code> element has CSS <code>transform: translate3d(0px, y, 0px);</code> set, where <code>y</code> is the current vertical position in pixels (e.g. <code>-620px</code>).</p>
+<p>Each parallax background image is then asynchronously loaded with Javascript by creating a new <code>img</code> element and setting the filename to its <code>src</code> attribute.</p>
 
-<p>Inside a <code>scroll</code> event handler there is a "visibility" check, so that only one of the parallax images is visible when user scrolls. On scroll <code>translate3d</code>'s <code>y</code> value is updated for only the currently visible image (<em>creating a parallax effect</em>).</p>
+<p>Created image elements get appended to a new <code>div</code> element that is appended to the page. Each new <code>div</code> element has CSS <code>transform: translate3d(0px, y, 0px);</code> set, where <code>y</code> is the vertical position for parallax effect in pixels (e.g. <code>-620px</code>).</p>
+
+<p>Inside a <code>scroll</code> event handler there is a "visibility" check, so that only one parallax image is visible when user scrolls. On scroll <code>translate3d</code>'s <code>y</code> value is updated for only the currently visible image (<em>creating a parallax effect</em>).</p>
 
 <h2>Fix 1. Don't put scroll/resize event handlers inside a loop</h2>
 
-<p>Looking at the code, I could see that there had been some effort in trying to do the correct thing by caching image references and then attaching one <code>scroll</code> event listener that would loop through all the images.</p>
+<p>Looking at the code, I could see that there had been some effort in trying to do the correct thing by caching image references and then attaching one <code>scroll</code> event listener that looped through all parallax images.</p>
 
 <p>...but that code looked unfinished and was commented out. Looks like the developer(s) ran out of time and instead decided to attach the <code>$(window).on('scroll')</code> and <code>$(window).on('resize')</code> event handlers <strong>for each parallax image</strong> inside a <code>$('.parallax-bg').each(function() {});</code> loop.</p>
 
-<p><strong>This means that every time you scroll (or resize), an individual event handler is called for each of the images.</strong> Depending on what kind of work you do inside your <code>scroll</code> event handler, this can potentially be bad for performance.</p>
+<p><strong>This means that every time you scroll (or resize), an event handler is called for each of the images.</strong> Depending on what kind of work you do inside your <code>scroll</code> event handler, this can potentially be bad for performance.</p>
 
 <p>Here is the code that loops through the images that are on the page. <em>Yeah, I've stripped out all the unrelated code to keep it clean.</em></p>
 
@@ -116,7 +118,7 @@
 </span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="p">});</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
-<p>By putting a <code>console.log</code> inside the scroll event handler and then scrolling, the console tab is flooded messages from each event handler:</p>
+<p>By putting a <code>console.log</code> inside the scroll event handler and then scrolling, the console tab gets flooded with messages from each event handler:</p>
 
 <p><img src="/images/parallax_scroll_handlers.png"></p>
 
@@ -214,7 +216,7 @@
 
 <h2>Fix 2. use requestAnimationFrame for resize and scroll event handlers</h2>
 
-<p>It might not be that obvious, but attaching a <code>scroll</code> event handler can in some cases be really costly for your website's performance. The reason for this is that by default the event handler gets called <em>a lot</em>, possibly several times per a frame when you are scrolling the page. If you are reading/writing values to the DOM or updating the layout of your page somehow directly in your <code>scroll</code> event handler, it will usually have a bad impact on the performance.</p>
+<p>It might not be that obvious, but attaching a <code>scroll</code> event handler can in some cases be really costly for your website's performance. The reason for this is that by default the event handler gets called <em>a lot</em>, possibly several times per a frame when you are scrolling the page. If you are reading/writing values to the DOM or updating layout of your page directly in your <code>scroll</code> event handler, it will usually have a bad impact on the scrolling performance.</p>
 
 <p>So what is the deal with <code>requestAnimationFrame</code>? It basically allows the browser to run your event handler (or any other function that runs frequently) when it is free to do new paint work on the screen.</p>
 
@@ -237,7 +239,7 @@
 </span><span class='line'><span class="p">});</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
-<p>After using a single <code>scroll</code> event handler + <code>requestAnimationFrame</code>, the timeline recording started to look already a bit better:</p>
+<p>After using a single <code>scroll</code> event handler + <code>requestAnimationFrame</code>, the timeline recording started to look a bit better already:</p>
 
 <p><img src="/images/parallax_raf.png"></p>
 
@@ -247,19 +249,19 @@
 
 <p><img src="/images/parallax_image_decoding.png"></p>
 
-<p>Long green bars indicate, that a lot of time (<code>150-200ms</code>) is spent on painting the area for each parallax image: resizing, decoding and showing the JPEG. The timeline recording shows a painted pixel size of <code>1351x469</code> pixels. When inspecting the images, I can see that those images have a resolution of <code>3000x2000</code> pixels, so the actual painted area is much smaller than image's resolution. This means that the browser needs to do extra work to show the image on screen.</p>
+<p>Long green bars indicate, that a lot of time (<code>150-200ms</code>) is spent on painting a big area of the screen: resizing, decoding and showing a JPEG image. The timeline recording shows a painted pixel size of <code>1351x469</code> pixels. Inspecting the images reveals that all parallax images have a resolution of <code>3000x2000</code> pixels, so the actual painted area is much smaller than the resolution of the image. This means that the browser needs to do extra work to show the image on screen.</p>
 
 <blockquote><p>...If you're sending large images to a device and then scaling them down using CSS or image dimension attributes, you're more likely to see this happen. <strong>Of course the amount by which the browser has to rescale images, and the frequency with which it has to do this, is going to affect your page's performance as they happen on the main browser thread, and therefore block other work from taking place. The case for sending images that can be rendered without any resizing, therefore, is very strong.</strong></p></blockquote>
 
 <p><em>-- Paul Lewis, in <a href="http://www.html5rocks.com/en/tutorials/speed/scrolling/#toc-resizing">Scrolling Performance</a></em></p>
 
-<p>Rather than resizing a big image, you could create at least 6-10 different resolutions of the same image (<em>you can look at your website's analytics to see what are the most common resolutions</em>), and to use a responsive image solution, like <a href="https://github.com/scottjehl/picturefill">Picturefill</a> to serve the image that is closest to user's browser's current resolution.</p>
+<p>Rather than resizing a big image, you could create at least 6-10 different resolutions of the same image (<em>you can look at your website's analytics to see what are the most common resolutions</em>), and use a responsive image solution, like <a href="https://github.com/scottjehl/picturefill">Picturefill</a> to serve an image that is closest to visitor's current browser window size.</p>
 
-<p>I did a quick fix by just resizing all images to match my <code>1360x768</code> resolution. This cause the JPEG decoding time to drop from <code>~50ms</code> to <code>30-35ms</code> for each image. I know that it does not seem like a huge win in terms of time, but it actually helps in enabling next fix (fix 4).</p>
+<p>I did a quick fix by just resizing all images to match my <code>1360x768</code> resolution. This caused the JPEG decoding time to drop from <code>~50ms</code> to <code>30-35ms</code> for each image. I know that it does not sound like a huge win in terms of time, but it actually helps in enabling next fix (fix 4).</p>
 
 <h2>Fix 4. Remove background-size CSS property if it slows down your website</h2>
 
-<p>Using <code>background-size: 100%</code> is good if you want to make sure that your background images automatically fit nicely to match visitor's screen resolution. If you use it for your parallax background images, <strong>those images probably have to be resized to fit your screen every time an image is shown on the screen</strong>, which is bad for performance.</p>
+<p>Using <code>background-size: 100%</code> is good if you want to make sure that your background images automatically fit nicely to match the size of visitor's browser window. If you use it for your parallax background images, <strong>those images probably have to be resized to fit your screen every time an image is shown on the screen</strong>, which is bad for performance.</p>
 
 <p>But if you use some kind of responsive image solution, there might not even be a need to use <code>background-size</code>, so remove it from your code to get a nice performance boost!</p>
 
@@ -281,15 +283,15 @@
 
 <h2>What about other fixes?</h2>
 
-<p>There could be possibly more performance optimizations done by doing a refactor for the website's code, but honestly I don't have time and really don't feel like doing that.</p>
+<p>I could possibly make further performance optimizations by doing a refactor for the website's code, but honestly I don't have time and really don't feel like doing that.</p>
 
-<p>One thing that I wasn't sure about was that is it possible somehow to get rid of the previously mentioned ~35ms image decoding cost when an image is getting shown by the browser (<code>display: none</code> -> <code>display: block</code>). Looks like that is causing the remaining spikes that are visible in timeline recordings.</p>
+<p>One thing that I wasn't sure about was that is it possible somehow to get rid of the previously mentioned ~35ms image decoding cost when an image gets shown by the browser (<code>display: none</code> -> <code>display: block</code>). Looks like that is causing the remaining spikes that are visible in timeline recordings.</p>
 
 <h2>Conclusion (tl;dr)</h2>
 
 <p>Low parallax scrolling FPS is relatively easy to increase once you are able to recognize possible performance bottlenecks.</p>
 
-<p>By combining all of the performance improving tricks mentioned in this post, I managed to increase the overall FPS of the website so that it drops only a couple of times shortly to 50 or 40 FPS, but does not drop under 30 at any point. This means that there are no more hiccups when scrolling.</p>
+<p>By combining all of the performance improvement tricks mentioned in this post, I managed to increase the overall FPS of the website so that the FPS drops only a couple of times shortly to 50 or 40, but does not drop under 30 at any point. This means that there are no more hiccups when scrolling.</p>
 
 <p><strong>FPS before any fixes*</strong>
 <img src="/images/parallax_original_fps.png">
@@ -344,6 +346,10 @@
 <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/window.requestAnimationFrame">Mozilla Developer Network: window.requestAnimationFrame</a></li>
 </ul>
 
+
+<hr />
+
+<p>EDIT: 2013-09-01 - Small spelling &amp; grammar fixes</p>
 ]]></content>
   </entry>
   
